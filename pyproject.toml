@@ -43,8 +43,8 @@ dev = [
 uarb-agent = "uarb_agent.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/OWNER/uarb-regulatory-agent"
-Issues = "https://github.com/OWNER/uarb-regulatory-agent/issues"
+Homepage = "https://github.com/AbhyudayaSikri/uarb-regulatory-agent"
+Issues = "https://github.com/AbhyudayaSikri/uarb-regulatory-agent/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

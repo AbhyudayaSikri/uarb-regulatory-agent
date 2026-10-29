@@ -1,6 +1,6 @@
 # UARB Regulatory Agent
 
-[![CI](https://github.com/OWNER/uarb-regulatory-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/uarb-regulatory-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/AbhyudayaSikri/uarb-regulatory-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/AbhyudayaSikri/uarb-regulatory-agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An email-driven agent that fetches regulatory filings from the
@@ -69,7 +69,7 @@ verification and an [App Password](https://support.google.com/accounts/answer/18
 ### Option A: Docker (recommended, always on)
 
 ```bash
-git clone https://github.com/OWNER/uarb-regulatory-agent.git
+git clone https://github.com/AbhyudayaSikri/uarb-regulatory-agent.git
 cd uarb-regulatory-agent
 cp .env.example .env      # fill in IMAP_* and SMTP_*
 docker compose up -d
