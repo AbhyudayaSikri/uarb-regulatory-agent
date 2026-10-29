@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uarb-regulatory-agent"
+version = "0.1.0"
+description = "Email-driven agent that fetches regulatory filings from the Nova Scotia UARB portal, zips them, and replies with a summary."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "UARB Regulatory Agent contributors" }]
+keywords = ["uarb", "regulatory", "playwright", "email", "agent", "nova-scotia"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Topic :: Communications :: Email",
+]
+dependencies = [
+    "playwright>=1.48,<2",
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.3,<3",
+    "typer>=0.12,<1",
+    "rich>=13.7",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+anthropic = ["anthropic>=0.34"]
+dev = [
+    "pytest>=8.2",
+    "pytest-timeout>=2.3",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+uarb-agent = "uarb_agent.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/OWNER/uarb-regulatory-agent"
+Issues = "https://github.com/OWNER/uarb-regulatory-agent/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+uarb_agent = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "live: tests that hit the real UARB portal over the network (opt-in via UARB_LIVE=1)",
+]
+timeout = 600
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
