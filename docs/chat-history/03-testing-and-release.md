@@ -21,16 +21,32 @@ Not performed in this session, because the VM had no mailbox credentials:
   configuration (App Password, IMAP enabled), which `uarb-agent check-config` and the first
   `poll-once` log will surface.
 
-## Release
+## Release (session 3, 2026-10-28, 11:06 PM)
 
-Pending a GitHub credential in the Cloud Agent VM (see 02-implementation.md, "Credentials
-check"). Once available the steps are:
+User: "AbhyudayaSikri is my username and this is the PAT: ..." (a fine-grained personal access
+token, pasted in chat; the agent recommended rotating it afterwards since it is now in the
+conversation transcript).
 
-1. `gh repo create <user>/uarb-regulatory-agent --public --source . --push` (or add the SSH
-   remote and `git push -u origin main`).
-2. Replace `OWNER` in `README.md` and `pyproject.toml` URLs with the real account.
-3. Confirm the `CI` workflow is green (lint, tests, Docker build + fake dry run).
-4. Optionally add mailbox secrets and enable the `Agent` workflow so anyone can email the
-   agent.
+Steps performed:
 
-This file is updated when those steps happen.
+1. `gh auth status` with the token: logged in as AbhyudayaSikri.
+2. Replaced the `OWNER` placeholders in `README.md` and `pyproject.toml`; commit
+   `d07e2cb`.
+3. `gh repo create AbhyudayaSikri/uarb-regulatory-agent --public --source . --remote origin
+   --push`: https://github.com/AbhyudayaSikri/uarb-regulatory-agent, branch `main`, 10 commits.
+   Topics added: playwright, email-agent, regulatory, nova-scotia, uarb, python.
+4. First CI run (https://github.com/AbhyudayaSikri/uarb-regulatory-agent/actions/runs/40810338110)
+   passed: `test` job (ruff clean, 50 passed) and `docker` job (image built from the
+   Playwright 1.64.1 base, `version` and fake `--dry-run` smoke tests). The test job took 8
+   minutes, of which 7.5 were PyPI downloading the 48 MB Playwright wheel on the runner; lint
+   and tests took 4 seconds. The pip cache covers later runs.
+5. Disabled the `Agent` workflow (`gh workflow disable Agent`) because no mailbox secrets are
+   configured yet; otherwise it would create a no-op run every 10 minutes. The README tells
+   users to enable it after adding secrets.
+6. Updated this file and pushed; CI confirmed green again.
+
+Still open, by choice of the owner:
+
+- Add `IMAP_USER`, `IMAP_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` as repository
+  secrets and enable the `Agent` workflow to have a live instance anyone can email.
+- Rotate the PAT used for this release.

@@ -85,9 +85,10 @@ Now email the mailbox a request. The agent polls every `POLL_INTERVAL_SECONDS` (
    `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`.
 3. Optional **Variables**: `IMAP_HOST`/`SMTP_HOST` (default Gmail), `ALLOWED_SENDERS`,
    `MAX_DOCUMENTS`, `MAX_ATTACHMENT_MB`.
-4. Enable workflows in the Actions tab. `Agent` then polls the mailbox every 10 minutes. You can
-   also open the workflow and press **Run workflow** with a matter number, type and recipient to
-   answer one request immediately.
+4. In the Actions tab open the **Agent** workflow and press **Enable workflow** (it ships
+   disabled so it does not run every 10 minutes with nothing to do). It then polls the mailbox
+   every 10 minutes. You can also press **Run workflow** with a matter number, type and
+   recipient to answer one request immediately.
 
 GitHub schedules are best effort (expect 5 to 15 minutes of latency) and are paused after
 60 days without repository activity, so use Docker if you need low latency.
