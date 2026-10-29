@@ -1,0 +1,18 @@
+services:
+  agent:
+    build: .
+    image: uarb-regulatory-agent:latest
+    container_name: uarb-regulatory-agent
+    env_file: .env
+    environment:
+      WORK_DIR: /data/out
+      HEADLESS: "true"
+    volumes:
+      - agent-data:/data
+    restart: unless-stopped
+    # Chromium needs a bit more shared memory than Docker's 64 MB default.
+    shm_size: "1gb"
+    command: ["serve"]
+
+volumes:
+  agent-data:

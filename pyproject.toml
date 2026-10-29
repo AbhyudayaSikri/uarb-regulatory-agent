@@ -21,7 +21,8 @@ classifiers = [
     "Topic :: Communications :: Email",
 ]
 dependencies = [
-    "playwright>=1.48,<2",
+    # Keep in sync with the base image tag in Dockerfile.
+    "playwright==1.64.1",
     "pydantic>=2.7,<3",
     "pydantic-settings>=2.3,<3",
     "typer>=0.12,<1",

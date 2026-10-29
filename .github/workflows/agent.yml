@@ -1,0 +1,106 @@
+# Zero-infrastructure deployment: GitHub Actions polls the agent's mailbox on a schedule and
+# answers any new requests. Configure these repository secrets (Settings > Secrets > Actions):
+#   IMAP_USER, IMAP_PASSWORD, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+# and optionally these repository variables (Settings > Variables > Actions):
+#   IMAP_HOST (default imap.gmail.com), IMAP_PORT, SMTP_HOST (default smtp.gmail.com),
+#   SMTP_PORT, ALLOWED_SENDERS, MAX_DOCUMENTS, MAX_ATTACHMENT_MB, LLM_PROVIDER
+# Optional secrets: OPENAI_API_KEY, ANTHROPIC_API_KEY.
+#
+# Note: GitHub runs scheduled workflows on a best-effort basis (expect 5-15 minutes of delay)
+# and disables them after 60 days without repository activity. For low latency run
+# `docker compose up -d` somewhere instead.
+
+name: Agent
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      matter:
+        description: "Handle one request directly (matter number, e.g. M12205). Leave empty to poll the mailbox."
+        required: false
+        default: ""
+      type:
+        description: "Document type for the direct request"
+        type: choice
+        options: [Exhibits, Key Documents, Other Documents, Transcripts, Recordings]
+        default: Other Documents
+      to:
+        description: "Recipient email for the direct request"
+        required: false
+        default: ""
+
+# Never run two pollers at once; a second trigger waits for the first to finish.
+concurrency:
+  group: uarb-agent-mailbox
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      IMAP_HOST: ${{ vars.IMAP_HOST || 'imap.gmail.com' }}
+      IMAP_PORT: ${{ vars.IMAP_PORT || '993' }}
+      IMAP_USER: ${{ secrets.IMAP_USER }}
+      IMAP_PASSWORD: ${{ secrets.IMAP_PASSWORD }}
+      IMAP_FOLDER: ${{ vars.IMAP_FOLDER || 'INBOX' }}
+      SMTP_HOST: ${{ vars.SMTP_HOST || 'smtp.gmail.com' }}
+      SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_FROM }}
+      ALLOWED_SENDERS: ${{ vars.ALLOWED_SENDERS }}
+      MAX_DOCUMENTS: ${{ vars.MAX_DOCUMENTS || '10' }}
+      MAX_ATTACHMENT_MB: ${{ vars.MAX_ATTACHMENT_MB || '20' }}
+      LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'none' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      HEADLESS: "true"
+      WORK_DIR: ${{ github.workspace }}/out
+    steps:
+      - name: Check mailbox secrets
+        id: config
+        run: |
+          if [ -z "$IMAP_USER" ] || [ -z "$IMAP_PASSWORD" ] || [ -z "$SMTP_FROM" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Mailbox secrets are not set; nothing to do. See the comment at the top of agent.yml."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.configured == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.config.outputs.configured == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install agent and Chromium
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          pip install -e .
+          playwright install --with-deps chromium
+
+      - name: Handle one direct request
+        if: steps.config.outputs.configured == 'true' && github.event_name == 'workflow_dispatch' && inputs.matter != ''
+        run: uarb-agent run --matter "${{ inputs.matter }}" --type "${{ inputs.type }}" --to "${{ inputs.to }}"
+
+      - name: Poll mailbox
+        if: steps.config.outputs.configured == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.matter != '')
+        run: uarb-agent poll-once
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots-${{ github.run_id }}
+          path: out/**/failure-*.png
+          if-no-files-found: ignore
+          retention-days: 7

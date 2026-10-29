@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Also run the live tests against the UARB portal"
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: Install Chromium
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.live }}
+        run: playwright install --with-deps chromium
+
+      - name: Live portal tests
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.live }}
+        env:
+          UARB_LIVE: "1"
+        run: pytest -q tests/live -m live
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshots
+          path: |
+            **/failure-*.png
+          if-no-files-found: ignore
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t uarb-regulatory-agent:ci .
+      - name: Smoke test image
+        run: |
+          docker run --rm uarb-regulatory-agent:ci version
+          docker run --rm uarb-regulatory-agent:ci run --matter M12205 --type "Other Documents" --fake --dry-run
