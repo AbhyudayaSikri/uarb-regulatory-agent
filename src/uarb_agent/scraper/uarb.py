@@ -233,13 +233,13 @@ class UarbScraper:
         headless: bool | None = None,
         channel: str | None = None,
         slow_mo: int = 0,
-        viewport: tuple[int, int] = (1400, 2400),
+        viewport: tuple[int, int] | None = None,
     ) -> None:
         self.settings = settings or Settings()
         self.headless = self.settings.headless if headless is None else headless
         self.channel = channel or self.settings.browser_channel
         self.slow_mo = slow_mo
-        self.viewport = viewport
+        self.viewport = viewport or (self.settings.viewport_width, self.settings.viewport_height)
         self.timeout = self.settings.page_timeout_ms
         self.url = self.settings.portal_url or UARB_URL
 

@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     poll_interval_seconds: int = Field(default=60, ge=5)
     headless: bool = True
     browser_channel: Literal["chromium", "chrome", "msedge"] = "chromium"
+    # Tall by default so the virtualized grid renders plenty of rows; lower it (e.g. 1000) when
+    # demoing with HEADLESS=false so dialogs stay on screen.
+    viewport_width: int = Field(default=1400, ge=800)
+    viewport_height: int = Field(default=2400, ge=700)
     allowed_senders: list[str] = Field(default_factory=list)
     rate_limit_per_sender_per_hour: int = Field(default=6, ge=0)
     work_dir: Path = Path("./out")
