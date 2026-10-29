@@ -126,8 +126,11 @@ def test_reply_mentions_confidential_and_dropped(tmp_path):
     reply = build_reply(result, zipped, None, max_mb=20, to="a@b.c")
     assert "I skipped 2 confidential documents" in reply.text_body
     assert "1 download failed on the portal and was left out." in reply.text_body
-    assert f"To stay under the 20 MB attachment limit I left out {dropped_name}" in reply.text_body
-    assert "the ZIP contains 4 files." in reply.text_body
+    assert "I downloaded 5 out of the 13 Exhibits." in reply.text_body
+    assert f"1 of them ({dropped_name} at 0.0 MB) exceeds the 20 MB email attachment limit" in (
+        reply.text_body
+    )
+    assert "contains the remaining 4 files." in reply.text_body
 
 
 def test_error_replies():

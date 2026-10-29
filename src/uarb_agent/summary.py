@@ -105,12 +105,27 @@ def attachment_paragraph(result: ScrapeResult, zipped: ZipResult | None, max_mb:
 
     attached = len(zipped.included) if zipped else 0
     downloaded = len(result.downloaded)
+    dropped = zipped.dropped_for_size if zipped else []
     sentences: list[str] = []
-    if attached:
+    if attached and not dropped:
         sentences.append(
             f"I downloaded {downloaded} out of the {available} {plural(available, doc_type)} "
-            f"and am attaching {'them' if attached > 1 else 'it'} as a ZIP here"
+            f"and am attaching {'them' if downloaded > 1 else 'it'} as a ZIP here"
             + (f" ({zipped.path.name})." if zipped else ".")
+        )
+    elif dropped:
+        names = _join([f"{f.filename} at {_mb(f.size_bytes)}" for f in dropped], "and")
+        n = len(dropped)
+        tail = (
+            f"so the attached ZIP ({zipped.path.name}) contains the remaining {attached} "
+            f"{'file' if attached == 1 else 'files'}."
+            if attached
+            else "so I could not attach any of them."
+        )
+        sentences.append(
+            f"I downloaded {downloaded} out of the {available} {plural(available, doc_type)}. "
+            f"{n} of {'them' if downloaded > 1 else 'it'} ({names}) "
+            f"{'exceeds' if n == 1 else 'exceed'} the {max_mb:g} MB email attachment limit, {tail}"
         )
     else:
         sentences.append(
@@ -131,13 +146,11 @@ def attachment_paragraph(result: ScrapeResult, zipped: ZipResult | None, max_mb:
             f"{n} {'download' if n == 1 else 'downloads'} failed on the portal and "
             f"{'was' if n == 1 else 'were'} left out."
         )
-    if zipped and zipped.dropped_for_size:
-        names = ", ".join(f.filename for f in zipped.dropped_for_size)
-        sentences.append(
-            f"To stay under the {max_mb:g} MB attachment limit I left out {names}; "
-            f"the ZIP contains {attached} {'file' if attached == 1 else 'files'}."
-        )
     return " ".join(sentences)
+
+
+def _mb(size_bytes: int) -> str:
+    return f"{size_bytes / 1024 / 1024:.1f} MB"
 
 
 def file_list(zipped: ZipResult | None) -> list[str]:
